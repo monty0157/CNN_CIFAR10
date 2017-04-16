@@ -3,26 +3,22 @@ from matplotlib import pyplot as plt
 import numpy as np
 import layers
 import parameters as params
-import image_import as images
+#import image_import as images
+from data_import import unpickle
 
-n_classes = 2
+unpickled_data = unpickle('./data/cifar-10-batches-py/data_batch_2')
+
+dataset = unpickled_data[b'data'].reshape(len(unpickled_data[b'data']),32,32,3)
+labels = unpickled_data[b'labels']
+
+#convert labels to one-hot vector
+vector_labels = tf.one_hot(labels, depth=10)
+
+n_classes = 10
 training_epochs = 2
 batch_size = 50
-n_images_train = 2416*2
-n_images_test_pos = 1125
-n_images_test_neg = 300
 
-#labels_train = np.array([[0,1,0,0,0,0,0,0,0,0],[1,0,0,0,0,0,0,0,0,0],[0,1,0,0,0,0,0,0,0,0],[0,0,1,0,0,0,0,0,0,0],[0,1,0,0,0,0,0,0,0,0],[0,0,0,1,0,0,0,0,0,0]]*(int(n_images_train)))
-labels_test = np.array([[0,1]]*n_images_test_pos)
-labels_test_neg = np.array([[1,0]]*n_images_test_neg)
-
-labels_train = np.array([[0,1],[1,0]]*int(n_images_train))
-
-image_import_train = images.image_import_train()
-image_import_test_pos = images.image_import_test_pos()
-image_import_test_neg = images.image_import_test_neg()
-
-x_input = tf.placeholder(tf.float32, shape=(None,160,96,3), name="x-input")
+x_input = tf.placeholder(tf.float32, shape=(None,32,32,3), name="x-input")
 y_output = tf.placeholder('float')
 
 keep_prob = tf.placeholder('float')
@@ -107,22 +103,22 @@ def train_neural_network(x):
             start = 0
             end = int(batch_size)
             for j in range(batch_size):
-                epoch_x, epoch_y = image_import_train[start:end], labels_train[start:end]
+                epoch_x, epoch_y = dataset[start:end], vector_labels.eval()[start:end]
                 j, c, summary = sess.run([optimizer, cost, summary_op], feed_dict = {x_input: epoch_x, y_output: epoch_y, keep_prob: 1.0 })
                 epoch_loss += c
                 start += int(batch_size)
                 end += int(batch_size)
-
+                print(epoch_loss)
                 #writer.add_summary(summary, j)
 
             print('Epoch', epoch, 'completed out of', 10, 'loss:', epoch_loss, 'Accuracy:', accuracy.eval(feed_dict={x:epoch_x, y_output: epoch_y, keep_prob: 1.0}),)
 
-            save_path = saver.save(sess, "my-model")
+            #save_path = saver.save(sess, "my-model")
 
         #model_import = tf.train.import_meta_graph('my-model.meta')
         #model_import.restore(sess, tf.train.latest_checkpoint('./'))
 
-        print("POSITIVE IMAGES TEST")
+        '''print("TEST")
         total_accuracy = 0
         start = 0
         end = int(batch_size)
@@ -133,22 +129,7 @@ def train_neural_network(x):
             end += int(batch_size)
 
         mean_accuracy = total_accuracy/int(n_images_test_pos/batch_size)
-        print(mean_accuracy)
-
-        print("NEGATIVE IMAGES TEST")
-        total_accuracy = 0
-        start = 0
-        end = int(batch_size)
-        for j in range(int(n_images_test_neg/batch_size)):
-            acc_x_neg, acc_y_neg = image_import_test_neg[start:end], labels_test_neg[start:end]
-            evaluation = sess.run(tf.argmax(prediction,1), feed_dict={x:acc_x_neg, y_output:acc_y_neg, keep_prob: 1.0})
-            total_accuracy += accuracy.eval(feed_dict={x:acc_x_neg, y_output:acc_y_neg, keep_prob: 1.0})
-            print(total_accuracy)
-            start += int(batch_size+1)
-            end += int(batch_size)
-
-        mean_accuracy = total_accuracy/int(n_images_test_neg/batch_size)
-        print(mean_accuracy)
+        print(mean_accuracy)'''
 
         '''#FOR TESTING THE NETWORK
         model_import = tf.train.import_meta_graph('my-model.meta')

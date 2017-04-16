@@ -8,3 +8,4 @@ my-model.data-00000-of-00001
 trained_model.py
 *.png
 *.txt
+/data
