@@ -9,3 +9,4 @@ trained_model.py
 *.png
 *.txt
 /data
+*.pem
